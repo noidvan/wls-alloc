@@ -5,6 +5,7 @@ edition = "2021"
 rust-version = "1.79"
 description = "Constrained least-squares control allocator for flight controllers (no_std, stack-only)"
 license = "MIT"
+repository = "https://github.com/noidvan/wls-alloc"
 keywords = ["robotics", "wls", "active-set", "no-std"]
 categories = ["no-std", "science::robotics", "aerospace"]
 
@@ -22,3 +23,8 @@ harness = false
 [[bin]]
 name = "bench_rust"
 path = "comparison/bench_rust.rs"
+
+[package.metadata.release]
+publish = false
+push = true
+tag = true
