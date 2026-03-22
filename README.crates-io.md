@@ -48,7 +48,7 @@ assert_eq!(stats.exit_code, ExitCode::Success);
 
 - **`no_std`** — no heap allocation, fully stack-based. Runs on bare-metal `thumbv7em-none-eabihf`.
 - **Const-generic dimensions** — `solve::<NU, NV, NC>(...)` monomorphizes to exact-sized code. No wasted memory.
-- **Incremental QR** — initial factorization via [nalgebra](https://nalgebra.org)'s Householder QR, then Givens rotation updates when constraints activate/deactivate. O(n) per constraint change vs O(n³) re-factorization.
+- **Incremental QR** — initial factorization via [nalgebra](https://nalgebra.rs/)'s Householder QR, then Givens rotation updates when constraints activate/deactivate. O(n) per constraint change vs O(n³) re-factorization.
 - **Warmstarting** — the working set (`ws`) persists between calls. With `imax=1`, the solver typically converges in a single iteration during steady flight.
 - **NaN-safe** — detects NaN in the QR solution and reports `ExitCode::NanFoundQ` / `ExitCode::NanFoundUs`. No `-ffast-math` assumptions.
 
