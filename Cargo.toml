@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/noidvan/wls-alloc"
 keywords = ["robotics", "wls", "active-set", "no-std"]
 categories = ["no-std", "science::robotics", "aerospace"]
-exclude = ["comparison/", "tests/regression/", "tests/common/naive.rs", ".github/"]
+exclude = ["tests/", "benches/", "comparison/", ".github/"]
 
 [dependencies]
 nalgebra = { version = "0.33", default-features = false, features = ["libm"] }
