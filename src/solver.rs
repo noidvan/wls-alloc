@@ -58,6 +58,7 @@ fn givens_right_apply_t<const R: usize, const C: usize>(
 fn qr_shift<const NC: usize, const NU: usize>(
     q: &mut OMatrix<f32, Const<NC>, Const<NU>>,
     r: &mut OMatrix<f32, Const<NU>, Const<NU>>,
+    qtb: &mut [f32; NU],
     i: usize,
     j: usize,
 ) where
@@ -99,6 +100,11 @@ fn qr_shift<const NC: usize, const NU: usize>(
         let (c, s) = givens(r[(j1, i1)], r[(j1 + 1, i1)]);
         givens_left_apply(r, c, s, j1, j1 + 1, NU);
         givens_right_apply_t(q, c, s, j1, j1 + 1, NC);
+        // Incrementally update cached Q^T * b
+        let t1 = qtb[j1];
+        let t2 = qtb[j1 + 1];
+        qtb[j1] = c * t1 - s * t2;
+        qtb[j1 + 1] = s * t1 + c * t2;
     }
 }
 
@@ -197,6 +203,25 @@ where
     let mut q: OMatrix<f32, Const<NC>, Const<NU>> = qr_decomp.q();
     let mut r: OMatrix<f32, Const<NU>, Const<NU>> = qr_decomp.r();
 
+    // Cache Q^T * b — updated incrementally via Givens in qr_shift
+    let mut qtb = [0.0f32; NU];
+    for i in 0..NU {
+        let mut s = 0.0f32;
+        for j in 0..NC {
+            s += q[(j, i)] * b[j];
+        }
+        qtb[i] = s;
+    }
+
+    // Hoist bound arrays and scratch space outside the loop
+    let mut umin_arr = [0.0f32; NU];
+    let mut umax_arr = [0.0f32; NU];
+    for i in 0..NU {
+        umin_arr[i] = umin[i];
+        umax_arr[i] = umax[i];
+    }
+    let mut w_temp = [0i8; NU];
+
     let mut z = [0.0f32; NU];
     let mut exit_code = ExitCode::IterLimit;
 
@@ -205,14 +230,9 @@ where
         iter += 1;
         iter <= imax
     } {
+        // Use cached Q^T * b instead of recomputing from Q
         let mut c = [0.0f32; NU];
-        for i in 0..n_free {
-            let mut s = 0.0f32;
-            for j in 0..NC {
-                s += q[(j, i)] * b[j];
-            }
-            c[i] = s;
-        }
+        c[..n_free].copy_from_slice(&qtb[..n_free]);
 
         for i in 0..n_free {
             for j in 0..(NU - n_free) {
@@ -241,13 +261,6 @@ where
             z[perm[i]] = us[perm[i]];
         }
 
-        let mut umin_arr = [0.0f32; NU];
-        let mut umax_arr = [0.0f32; NU];
-        for i in 0..NU {
-            umin_arr[i] = umin[i];
-            umax_arr[i] = umax[i];
-        }
-        let mut w_temp = [0i8; NU];
         let n_violated =
             check_limits_tol(n_free, &z, &umin_arr, &umax_arr, &mut w_temp, Some(&perm));
 
@@ -261,14 +274,9 @@ where
                 break;
             }
 
+            // Dual variables — use cached qtb instead of recomputing Q^T * b
             let mut d = [0.0f32; NU];
-            for i in n_free..NU {
-                let mut s = 0.0f32;
-                for j in 0..NC {
-                    s += q[(j, i)] * b[j];
-                }
-                d[i] = s;
-            }
+            d[n_free..NU].copy_from_slice(&qtb[n_free..NU]);
             for i in n_free..NU {
                 for j in i..NU {
                     d[i] -= r[(i, j)] * us[perm[j]];
@@ -294,7 +302,7 @@ where
                 break;
             }
 
-            qr_shift(&mut q, &mut r, n_free, n_free + f_free);
+            qr_shift(&mut q, &mut r, &mut qtb, n_free, n_free + f_free);
             ws[perm[n_free + f_free]] = 0;
             let last_val = perm[n_free + f_free];
             for i in (1..=f_free).rev() {
@@ -342,7 +350,7 @@ where
                 break;
             }
 
-            qr_shift(&mut q, &mut r, n_free - 1, f_bound);
+            qr_shift(&mut q, &mut r, &mut qtb, n_free - 1, f_bound);
             ws[i_a] = i_s;
             let first_val = perm[f_bound];
             for i in 0..(n_free - f_bound - 1) {
