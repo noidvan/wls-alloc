@@ -1,6 +1,6 @@
 [package]
 name = "wls-alloc"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.79"
 description = "Constrained least-squares control allocator for flight controllers (no_std, stack-only)"
