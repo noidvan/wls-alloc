@@ -2,6 +2,7 @@
 
 [![Rust CI & Publish](https://github.com/noidvan/wls-alloc/actions/workflows/ci.yml/badge.svg)](https://github.com/noidvan/wls-alloc/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/wls-alloc.svg)](https://crates.io/crates/wls-alloc)
+[![docs.rs](https://docs.rs/wls-alloc/badge.svg)](https://docs.rs/wls-alloc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Weighted Least-Squares (WLS) constrained control allocator for flight controllers.
