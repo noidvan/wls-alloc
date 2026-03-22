@@ -7,15 +7,27 @@
 //!
 //! # Quick start
 //!
-//! ```ignore
-//! use wls_alloc::{setup_a, setup_b, solve};
+//! ```no_run
+//! use wls_alloc::{setup_a, setup_b, solve, ExitCode, VecN, MatA};
 //!
-//! // Build LS problem from control-allocation parameters
-//! let (a, gamma) = setup_a::<4, 6, 10>(&g, &wv, &mut wu, theta, cond_bound);
+//! // Effectiveness matrix G (6 pseudo-controls × 4 motors)
+//! let g: MatA<6, 4> = MatA::zeros(); // replace with real data
+//! let wv: VecN<6> = VecN::from_column_slice(&[10.0, 10.0, 10.0, 1.0, 0.5, 0.5]);
+//! let mut wu: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
+//!
+//! // Build LS problem
+//! let (a, gamma) = setup_a::<4, 6, 10>(&g, &wv, &mut wu, 2e-9, 4e5);
+//! let v: VecN<6> = VecN::zeros();
+//! let ud: VecN<4> = VecN::from_column_slice(&[0.5; 4]);
 //! let b = setup_b::<4, 6, 10>(&v, &ud, &wv, &wu, gamma);
 //!
 //! // Solve
+//! let umin: VecN<4> = VecN::from_column_slice(&[0.0; 4]);
+//! let umax: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
+//! let mut us: VecN<4> = VecN::from_column_slice(&[0.5; 4]);
+//! let mut ws = [0i8; 4];
 //! let stats = solve::<4, 6, 10>(&a, &b, &umin, &umax, &mut us, &mut ws, 100);
+//! assert_eq!(stats.exit_code, ExitCode::Success);
 //! ```
 
 #![no_std]
@@ -27,6 +39,7 @@ pub mod linalg;
 pub mod setup;
 /// Active-set constrained least-squares solver.
 pub mod solver;
+/// Core types, constants, and nalgebra type aliases.
 pub mod types;
 
 pub use setup::{setup_a, setup_b};

@@ -1,1 +1,4 @@
-target
+target/
+comparison/bench_c
+comparison/results_*.csv
+.venv/
