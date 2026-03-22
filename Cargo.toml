@@ -1,0 +1,20 @@
+[package]
+name = "wls-alloc"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.79"
+description = "Constrained least-squares control allocator for flight controllers (no_std, stack-only)"
+license = "MIT"
+keywords = ["robotics", "wls", "active-set", "no-std"]
+categories = ["no-std", "science::robotics", "aerospace"]
+
+[dependencies]
+nalgebra = { version = "0.33", default-features = false, features = ["libm"] }
+libm = "0.2"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "solver"
+harness = false
