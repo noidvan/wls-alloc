@@ -12,7 +12,7 @@ categories = ["no-std", "science::robotics", "aerospace"]
 exclude = ["tests/", "benches/", "comparison/", ".github/"]
 
 [dependencies]
-nalgebra = { version = "0.33", default-features = false, features = ["libm"] }
+nalgebra = { version = "0.34", default-features = false, features = ["libm"] }
 libm = "0.2"
 
 [dev-dependencies]
