@@ -106,6 +106,52 @@ where
     (a, gamma)
 }
 
+/// Build the unregularised coefficient matrix `A = Wv · G`.
+///
+/// Returns an `NV × NU` matrix suitable for [`solve_cls`] with `NC = NV`.
+/// No regularisation rows are appended, so this is appropriate when the
+/// regularisation term `γ ‖Wu (u − u_pref)‖²` is not desired.
+///
+/// [`solve_cls`]: crate::solve_cls
+pub fn setup_a_unreg<const NU: usize, const NV: usize>(
+    b_mat: &MatA<NV, NU>,
+    wv: &VecN<NV>,
+) -> MatA<NV, NU>
+where
+    Const<NV>: DimName + DimMin<Const<NU>, Output = Const<NU>>,
+    Const<NU>: DimName,
+    DefaultAllocator: Allocator<Const<NV>, Const<NU>>
+        + Allocator<Const<NV>, Const<NV>>
+        + Allocator<Const<NU>, Const<NU>>
+        + Allocator<Const<NV>>
+        + Allocator<Const<NU>>,
+{
+    let mut a: MatA<NV, NU> = MatA::zeros();
+    for j in 0..NU {
+        for i in 0..NV {
+            a[(i, j)] = wv[i] * b_mat[(i, j)];
+        }
+    }
+    a
+}
+
+/// Build the unregularised right-hand side `b = Wv · v`.
+///
+/// Returns an `NV`-element vector suitable for [`solve_cls`] with `NC = NV`.
+///
+/// [`solve_cls`]: crate::solve_cls
+pub fn setup_b_unreg<const NV: usize>(v: &VecN<NV>, wv: &VecN<NV>) -> VecN<NV>
+where
+    Const<NV>: DimName,
+    DefaultAllocator: Allocator<Const<NV>>,
+{
+    let mut b: VecN<NV> = VecN::zeros();
+    for i in 0..NV {
+        b[i] = wv[i] * v[i];
+    }
+    b
+}
+
 /// Compute the right-hand side `b` for the LS problem.
 pub fn setup_b<const NU: usize, const NV: usize, const NC: usize>(
     v: &VecN<NV>,

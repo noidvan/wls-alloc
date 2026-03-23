@@ -134,13 +134,15 @@ fn backward_tri_solve<const NU: usize>(
 // Incremental active-set solver
 // ---------------------------------------------------------------------------
 
-/// Active-set solver with incremental QR updates via Givens rotations.
+/// Active-set solver for the regularised WLS problem.
 ///
-/// Uses nalgebra's Householder QR for the initial factorisation, then Givens
-/// column-shift updates when constraints activate/deactivate.
+/// This is a convenience wrapper around [`solve_cls`] that enforces
+/// `NC == NU + NV` (the augmented system produced by [`setup_a`] /
+/// [`setup_b`]).
 ///
-/// Translates `solveActiveSet_qr.c`.
-#[allow(clippy::needless_range_loop)] // multi-array index loops (ws, us, perm, bounds)
+/// [`setup_a`]: crate::setup_a
+/// [`setup_b`]: crate::setup_b
+#[allow(clippy::needless_range_loop)] // forwarding wrapper
 pub fn solve<const NU: usize, const NV: usize, const NC: usize>(
     a: &MatA<NC, NU>,
     b: &VecN<NC>,
@@ -161,6 +163,39 @@ where
         + Allocator<Const<NU>>,
 {
     debug_assert_eq!(NC, NU + NV);
+    solve_cls(a, b, umin, umax, us, ws, imax)
+}
+
+/// General box-constrained least-squares solver.
+///
+/// Solves `min ‖Au − b‖²` subject to `umin ≤ u ≤ umax` using an active-set
+/// method with incremental QR updates (Givens rotations).
+///
+/// Unlike [`solve`], this function does **not** require `NC == NU + NV` and
+/// accepts any `NC ≥ NU`. Use it with the unregularised setup functions
+/// ([`setup_a_unreg`] / [`setup_b_unreg`]) or with a custom `A` / `b`.
+///
+/// [`setup_a_unreg`]: crate::setup_a_unreg
+/// [`setup_b_unreg`]: crate::setup_b_unreg
+#[allow(clippy::needless_range_loop)] // multi-array index loops (ws, us, perm, bounds)
+pub fn solve_cls<const NU: usize, const NC: usize>(
+    a: &MatA<NC, NU>,
+    b: &VecN<NC>,
+    umin: &VecN<NU>,
+    umax: &VecN<NU>,
+    us: &mut VecN<NU>,
+    ws: &mut [i8; NU],
+    imax: usize,
+) -> SolverStats
+where
+    Const<NC>: DimName + DimMin<Const<NU>, Output = Const<NU>>,
+    Const<NU>: DimName,
+    DefaultAllocator: Allocator<Const<NC>, Const<NU>>
+        + Allocator<Const<NC>, Const<NC>>
+        + Allocator<Const<NU>, Const<NU>>
+        + Allocator<Const<NC>>
+        + Allocator<Const<NU>>,
+{
     let imax = if imax == 0 { 100 } else { imax };
 
     for i in 0..NU {

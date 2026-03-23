@@ -12,6 +12,7 @@ use wls_alloc::{MatA, VecN};
 /// static-sized QR requires compile-time dimensions.
 ///
 /// Translates `solveActiveSet_qr_naive.c`.
+#[allow(dead_code)]
 pub fn solve_naive<const NU: usize, const NV: usize, const NC: usize>(
     a: &MatA<NC, NU>,
     b: &VecN<NC>,
