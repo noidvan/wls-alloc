@@ -82,4 +82,3 @@ pub mod raw {
     pub use crate::setup::{setup_a, setup_a_unreg, setup_b, setup_b_unreg};
     pub use crate::solver::{solve, solve_cls};
 }
-
