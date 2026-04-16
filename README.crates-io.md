@@ -19,15 +19,50 @@ respecting actuator limits.
 
 ## Quick start
 
+### High level API
+
+`ControlAllocator` manages the problem configuration and warm-start state.
+Build once, call `solve()` every tick.
+
 ```rust
-use wls_alloc::{setup_a, setup_b, solve, ExitCode, VecN, MatA};
+use wls_alloc::wls::ControlAllocator;
+use wls_alloc::ExitCode;
+use nalgebra::{SMatrix, SVector};
+
+// Problem dimensions: NU=4 motors, NV=6 pseudo-controls, NC=NU+NV=10
+let g: SMatrix<f32, 6, 4> = /* your effectiveness matrix */;
+let wv = SVector::<f32, 6>::new(10.0, 10.0, 10.0, 1.0, 0.5, 0.5);
+let wu = SVector::<f32, 4>::from_element(1.0_f32);
+
+// One-time setup: factor A, compute γ, normalize wu
+let mut alloc = ControlAllocator::<4, 6, 10>::new(&g, &wv, wu, 2e-9, 4e5);
+
+// Per-tick solve — warm-start is persisted automatically across calls
+let v: SVector<f32, 6> = /* desired pseudo-control */;
+let u_pref = SVector::<f32, 4>::from_element(0.5_f32);
+let umin = SVector::<f32, 4>::from_element(0.0_f32);
+let umax = SVector::<f32, 4>::from_element(1.0_f32);
+
+let stats = alloc.solve(&v, &u_pref, &umin, &umax, 100);
+assert_eq!(stats.exit_code, ExitCode::Success);
+let u = alloc.solution(); // optimal motor commands
+```
+
+### Raw building blocks
+
+For custom `A` matrices, the unregularised CLS variant, or non-standard pipeline
+composition, the `raw` module exposes the underlying free functions directly.
+
+```rust
+use wls_alloc::raw::{setup_a, setup_b, solve};
+use wls_alloc::{ExitCode, VecN, MatA};
 
 // Problem dimensions: NU=4 motors, NV=6 pseudo-controls, NC=NU+NV=10
 let g: MatA<6, 4> = /* your effectiveness matrix */;
 let wv: VecN<6> = VecN::from_column_slice(&[10.0, 10.0, 10.0, 1.0, 0.5, 0.5]);
 let mut wu: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
 
-// Build the LS problem
+// Build the LS problem (setup_a normalizes wu in-place)
 let (a, gamma) = setup_a::<4, 6, 10>(&g, &wv, &mut wu, 2e-9, 4e5);
 let v: VecN<6> = /* desired pseudo-control */;
 let u_pref: VecN<4> = VecN::from_column_slice(&[0.5; 4]);
