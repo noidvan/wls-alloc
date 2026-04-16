@@ -2,7 +2,8 @@ mod common;
 
 use common::{mat, max_abs_diff, vec_from};
 use nalgebra::SMatrix;
-use wls_alloc::{setup_a, setup_a_unreg, setup_b, setup_b_unreg, solve, solve_cls, ExitCode};
+use wls_alloc::raw::{setup_a, setup_a_unreg, setup_b, setup_b_unreg, solve, solve_cls};
+use wls_alloc::ExitCode;
 
 const TOL: f32 = 1e-4;
 

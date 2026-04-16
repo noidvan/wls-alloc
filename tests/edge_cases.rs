@@ -3,7 +3,8 @@ mod common;
 use common::naive::solve_naive;
 use common::{mat, max_abs_diff, vec_from};
 use nalgebra::{SMatrix, SVector};
-use wls_alloc::{setup_a, setup_b, solve, ExitCode};
+use wls_alloc::raw::{setup_a, setup_b, solve};
+use wls_alloc::ExitCode;
 
 const TOL: f32 = 1e-4;
 

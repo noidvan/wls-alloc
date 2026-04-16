@@ -9,7 +9,8 @@ mod c_test_cases;
 
 use nalgebra::{ArrayStorage, Matrix, SMatrix, SVector};
 use std::time::Instant;
-use wls_alloc::{setup_a, setup_b, solve, ExitCode};
+use wls_alloc::raw::{setup_a, setup_b, solve};
+use wls_alloc::ExitCode;
 
 fn mat<const R: usize, const C: usize>(data: [[f32; R]; C]) -> SMatrix<f32, R, C> {
     Matrix::from_data(ArrayStorage(data))

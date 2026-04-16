@@ -2,7 +2,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use nalgebra::{ArrayStorage, Matrix, SMatrix, SVector};
-use wls_alloc::{setup_a, setup_b, solve};
+use wls_alloc::raw::{setup_a, setup_b, solve};
 
 fn mat<const R: usize, const C: usize>(data: [[f32; R]; C]) -> SMatrix<f32, R, C> {
     Matrix::from_data(ArrayStorage(data))
