@@ -140,8 +140,8 @@ fn backward_tri_solve<const NU: usize>(
 /// `NC == NU + NV` (the augmented system produced by [`setup_a`] /
 /// [`setup_b`]).
 ///
-/// [`setup_a`]: crate::setup_a
-/// [`setup_b`]: crate::setup_b
+/// [`setup_a`]: crate::raw::setup_a
+/// [`setup_b`]: crate::raw::setup_b
 #[allow(clippy::needless_range_loop)] // forwarding wrapper
 pub fn solve<const NU: usize, const NV: usize, const NC: usize>(
     a: &MatA<NC, NU>,
@@ -175,8 +175,8 @@ where
 /// accepts any `NC ≥ NU`. Use it with the unregularised setup functions
 /// ([`setup_a_unreg`] / [`setup_b_unreg`]) or with a custom `A` / `b`.
 ///
-/// [`setup_a_unreg`]: crate::setup_a_unreg
-/// [`setup_b_unreg`]: crate::setup_b_unreg
+/// [`setup_a_unreg`]: crate::raw::setup_a_unreg
+/// [`setup_b_unreg`]: crate::raw::setup_b_unreg
 #[allow(clippy::needless_range_loop)] // multi-array index loops (ws, us, perm, bounds)
 pub fn solve_cls<const NU: usize, const NC: usize>(
     a: &MatA<NC, NU>,

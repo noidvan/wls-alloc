@@ -112,7 +112,7 @@ where
 /// No regularisation rows are appended, so this is appropriate when the
 /// regularisation term `γ ‖Wu (u − u_pref)‖²` is not desired.
 ///
-/// [`solve_cls`]: crate::solve_cls
+/// [`solve_cls`]: crate::raw::solve_cls
 pub fn setup_a_unreg<const NU: usize, const NV: usize>(
     b_mat: &MatA<NV, NU>,
     wv: &VecN<NV>,
@@ -139,7 +139,7 @@ where
 ///
 /// Returns an `NV`-element vector suitable for [`solve_cls`] with `NC = NV`.
 ///
-/// [`solve_cls`]: crate::solve_cls
+/// [`solve_cls`]: crate::raw::solve_cls
 pub fn setup_b_unreg<const NV: usize>(v: &VecN<NV>, wv: &VecN<NV>) -> VecN<NV>
 where
     Const<NV>: DimName,
