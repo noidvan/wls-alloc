@@ -5,43 +5,46 @@
 //! flight controllers: `no_std`, fully stack-allocated, const-generic over
 //! problem dimensions.
 //!
-//! # Regularised (standard WLS)
+//! # Encapsulated API (recommended)
+//!
+//! [`wls::ControlAllocator`] owns the static problem (effectiveness matrix,
+//! weights, `γ`) and the warm-start solver state. Build once, then call
+//! [`solve`](wls::ControlAllocator::solve) on every control tick.
 //!
 //! ```no_run
-//! use wls_alloc::{setup_a, setup_b, solve, ExitCode, VecN, MatA};
+//! use wls_alloc::wls::ControlAllocator;
+//! use wls_alloc::{ExitCode, VecN, MatA};
 //!
 //! // Effectiveness matrix G (6 pseudo-controls × 4 motors)
 //! let g: MatA<6, 4> = MatA::zeros(); // replace with real data
 //! let wv: VecN<6> = VecN::from_column_slice(&[10.0, 10.0, 10.0, 1.0, 0.5, 0.5]);
-//! let mut wu: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
+//! let wu: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
 //!
-//! // Build LS problem
-//! let (a, gamma) = setup_a::<4, 6, 10>(&g, &wv, &mut wu, 2e-9, 4e5);
+//! let mut alloc = ControlAllocator::<4, 6, 10>::new(&g, &wv, wu, 2e-9, 4e5);
+//!
+//! // Per-tick solve
 //! let v: VecN<6> = VecN::zeros();
 //! let ud: VecN<4> = VecN::from_column_slice(&[0.5; 4]);
-//! let b = setup_b::<4, 6, 10>(&v, &ud, &wv, &wu, gamma);
-//!
-//! // Solve
 //! let umin: VecN<4> = VecN::from_column_slice(&[0.0; 4]);
 //! let umax: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
-//! let mut us: VecN<4> = VecN::from_column_slice(&[0.5; 4]);
-//! let mut ws = [0i8; 4];
-//! let stats = solve::<4, 6, 10>(&a, &b, &umin, &umax, &mut us, &mut ws, 100);
+//!
+//! let stats = alloc.solve(&v, &ud, &umin, &umax, 100);
 //! assert_eq!(stats.exit_code, ExitCode::Success);
+//! let u = alloc.solution();
 //! ```
 //!
-//! # Unregularised (constrained least-squares)
+//! # Raw building blocks
 //!
-//! When the regularisation term `γ ‖Wu (u − u_pref)‖²` is not needed, use
-//! [`setup_a_unreg`] / [`setup_b_unreg`] with [`solve_cls`]. The coefficient
-//! matrix is `NV × NU` instead of `(NV + NU) × NU`, yielding a smaller QR
-//! factorisation.
+//! The [`raw`] module exposes the underlying free functions
+//! (`setup_a` / `setup_b` / `solve` / `solve_cls`) for advanced use: custom
+//! `A` matrices, the unregularised CLS variant, or composing pieces of the
+//! pipeline differently.
 //!
 //! ```no_run
-//! use wls_alloc::{setup_a_unreg, setup_b_unreg, solve_cls, ExitCode, VecN, MatA};
+//! use wls_alloc::raw::{setup_a_unreg, setup_b_unreg, solve_cls};
+//! use wls_alloc::{ExitCode, VecN, MatA};
 //!
-//! // Square system: 4 pseudo-controls × 4 motors
-//! let g: MatA<4, 4> = MatA::zeros(); // replace with real data
+//! let g: MatA<4, 4> = MatA::zeros();
 //! let wv: VecN<4> = VecN::from_column_slice(&[1.0; 4]);
 //!
 //! let a = setup_a_unreg::<4, 4>(&g, &wv);
@@ -67,7 +70,18 @@ pub mod setup;
 pub mod solver;
 /// Core types, constants, and nalgebra type aliases.
 pub mod types;
+/// High-level encapsulated WLS control allocator.
+pub mod wls;
+
+pub use types::{ExitCode, MatA, SolverStats, VecN};
+
+/// Low-level free-function building blocks. Use [`wls::ControlAllocator`] for
+/// typical flight-controller workloads; reach for `raw` when you need a custom
+/// `A`, the unregularised CLS solver, or non-standard pipeline composition.
+pub mod raw {
+    pub use crate::setup::{setup_a, setup_a_unreg, setup_b, setup_b_unreg};
+    pub use crate::solver::{solve, solve_cls};
+}
 
 pub use setup::{setup_a, setup_a_unreg, setup_b, setup_b_unreg};
 pub use solver::{solve, solve_cls};
-pub use types::{ExitCode, MatA, SolverStats, VecN};
